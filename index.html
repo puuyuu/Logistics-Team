@@ -875,6 +875,8 @@ function isCornerPair(idA, idB){
   });
 }
 var HALL_W = 640, HALL_H = 360, GRID_STEP = 60;
+var CM_PER_GRID = 120, SCALE_CM_PER_PX = CM_PER_GRID / GRID_STEP;
+function pxToCm(px){ return Math.round(px * SCALE_CM_PER_PX); }
 var L2_ITEMS = [
   {id:'p1',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p2',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
   {id:'p3',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p4',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
@@ -1094,11 +1096,11 @@ function renderGridLines(hallArea){
   var html = '';
   for(var x=0; x<=HALL_W; x+=GRID_STEP){
     html += '<div class="grid-line v" style="left:'+x+'px;"></div>';
-    html += '<div class="grid-label vlbl" style="left:'+(x+2)+'px;">'+x+'</div>';
+    html += '<div class="grid-label vlbl" style="left:'+(x+2)+'px;">'+pxToCm(x)+'</div>';
   }
   for(var y=0; y<=HALL_H; y+=GRID_STEP){
     html += '<div class="grid-line h" style="top:'+y+'px;"></div>';
-    html += '<div class="grid-label hlbl" style="top:'+(y+2)+'px;">'+y+'</div>';
+    html += '<div class="grid-label hlbl" style="top:'+(y+2)+'px;">'+pxToCm(y)+'</div>';
   }
   layer.innerHTML = html;
   hallArea.insertBefore(layer, hallArea.firstChild);
@@ -1164,23 +1166,24 @@ function clearSpacingLines(){
   $all('.measure-line').forEach(function(el){ el.remove(); });
   $all('.measure-label').forEach(function(el){ el.remove(); });
 }
-function drawSpacingLine(a, b, dist){
+function drawSpacingLine(a, b, distCm){
   var hallArea = $('#hall-area');
   if(!hallArea) return;
   var dx = b.x-a.x, dy = b.y-a.y;
+  var pxDist = Math.hypot(dx,dy);
   var angle = Math.atan2(dy,dx) * 180/Math.PI;
   var line = document.createElement('div');
   line.className = 'measure-line';
   line.style.left = a.x+'px';
   line.style.top = a.y+'px';
-  line.style.width = dist+'px';
+  line.style.width = pxDist+'px';
   line.style.transform = 'rotate('+angle+'deg)';
   hallArea.appendChild(line);
   var label = document.createElement('div');
   label.className = 'measure-label bad';
   label.style.left = (a.x+dx/2-24)+'px';
   label.style.top = (a.y+dy/2-10)+'px';
-  label.textContent = dist+'cm';
+  label.textContent = distCm+'cm';
   hallArea.appendChild(label);
 }
 function updateSpacingFeedback(){
@@ -1193,7 +1196,7 @@ function updateSpacingFeedback(){
     for(var j=i+1;j<ids.length;j++){
       if(isCornerPair(ids[i], ids[j])) continue;
       var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
-      var d = Math.round(Math.hypot(a.x-b.x, a.y-b.y));
+      var d = pxToCm(Math.hypot(a.x-b.x, a.y-b.y));
       if(minDist === null || d < minDist) minDist = d;
       if(d < 120){
         violations++;
@@ -1281,7 +1284,7 @@ function confirmTables(){
       if(isCornerPair(ids[i], ids[j])) continue;
       total++;
       var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
-      var d = Math.hypot(a.x-b.x, a.y-b.y);
+      var d = pxToCm(Math.hypot(a.x-b.x, a.y-b.y));
       if(d < 120) violations++;
     }
   }
@@ -1402,7 +1405,7 @@ function renderL2Step(){
     tip2.style.marginTop = '0';
     tip2.textContent = L2.gridLaid
       ? '💡 把「🛕主壇」「🚪出入口」拖進場地標出方向，再把12張圓桌自由拖進場地擺放。桌子之間至少要120公分，系統會即時標紅線提醒；其中 5↔6、7↔8 是轉角相連桌，可以緊靠在一起，不受120公分限制。'
-      : '💡 把左上角的「📏 皮尺」拖到場地右下角，鋪出每格60公分的座標網格。';
+      : '💡 把左上角的「📏 皮尺」拖到場地右下角，拉開皮尺鋪出座標網格——每格代表120公分。';
     wrap.appendChild(tip2);
 
     var hallScroll = document.createElement('div');
