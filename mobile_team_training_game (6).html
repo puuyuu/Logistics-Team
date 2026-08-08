@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機動大作戰：換場特攻隊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --jade:#26443a;
+  --jade-light:#3d6a58;
+  --jade-dark:#152d26;
+  --gold:#c79a2e;
+  --gold-light:#e7c766;
+  --parchment:#efe7d2;
+  --parchment-dark:#ded1a9;
+  --ink:#2b2318;
+  --vermillion:#963c2c;
+  --vermillion-light:#c85f45;
+  --card:#fbf6e9;
+  --shadow: rgba(21,45,38,0.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Noto Sans TC', sans-serif;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(199,154,46,0.12), transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(199,154,46,0.10), transparent 45%),
+    var(--jade-dark);
+  color:var(--ink);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+h1,h2,h3{font-family:'Noto Serif TC', serif; margin:0 0 8px 0;}
+#app{
+  width:100%;
+  max-width:960px;
+  background:var(--parchment);
+  border-radius:14px;
+  box-shadow:0 20px 60px var(--shadow), 0 0 0 1px rgba(199,154,46,0.4);
+  overflow:hidden;
+  border:1px solid var(--gold);
+}
+#topbar{
+  background:linear-gradient(135deg, var(--jade), var(--jade-light));
+  color:var(--parchment);
+  padding:14px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+  border-bottom:3px solid var(--gold);
+}
+#topbar .brand{
+  font-family:'Noto Serif TC', serif;
+  font-weight:900;
+  font-size:1.15em;
+  letter-spacing:.05em;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#topbar .brand small{
+  display:block;
+  font-family:'Noto Sans TC',sans-serif;
+  font-weight:400;
+  font-size:.55em;
+  opacity:.8;
+  letter-spacing:.1em;
+}
+#hud{display:flex; gap:16px; align-items:center; font-size:.92em;}
+#hud .stat{
+  background:rgba(0,0,0,0.18);
+  border:1px solid rgba(231,199,102,0.5);
+  border-radius:8px;
+  padding:5px 12px;
+  min-width:74px;
+  text-align:center;
+}
+#hud .stat b{display:block; font-size:1.15em; color:var(--gold-light);}
+#hud .stat span{font-size:.72em; opacity:.85;}
+#stage{padding:26px 28px 30px; min-height:440px; position:relative;}
+.screen{display:none; animation:fadeIn .35s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.divider{height:2px; background:linear-gradient(90deg, transparent, var(--gold), transparent); margin:14px 0 18px;}
+
+.btn{
+  font-family:'Noto Sans TC', sans-serif;
+  font-weight:700;
+  border:none;
+  border-radius:9px;
+  padding:11px 22px;
+  cursor:pointer;
+  background:var(--jade);
+  color:var(--parchment);
+  box-shadow:0 3px 0 var(--jade-dark);
+  transition:transform .08s ease;
+  font-size:.95em;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--jade-dark);}
+.btn.gold{background:var(--gold); color:var(--jade-dark); box-shadow:0 3px 0 #96731a;}
+.btn.ghost{background:transparent; color:var(--jade); box-shadow:none; border:2px solid var(--jade);}
+.btn:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+
+/* ---------- START SCREEN ---------- */
+#screen-start .hero{
+  text-align:center;
+  padding:10px 0 6px;
+}
+#screen-start .hero-emoji{font-size:2.6em;}
+#screen-start .lead{
+  max-width:600px; margin:8px auto 0; line-height:1.8; color:#4a4030;
+}
+.case-box{
+  background:var(--card);
+  border:1px solid var(--parchment-dark);
+  border-left:5px solid var(--vermillion);
+  border-radius:8px;
+  padding:14px 18px;
+  margin:18px 0;
+  font-size:.94em;
+  line-height:1.75;
+}
+.goal-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0;}
+.goal-card{
+  background:var(--card); border:1px solid var(--parchment-dark); border-radius:10px;
+  padding:16px 10px; text-align:center; font-size:1em; line-height:1.6;
+}
+.goal-card .num{
+  display:inline-block; width:26px; height:26px; line-height:26px;
+  background:var(--gold); color:var(--jade-dark); border-radius:50%; font-weight:700; margin-bottom:6px;
+}
+.center{text-align:center;}
+
+/* ---------- LEVEL 0：人力分配 ---------- */
+.safety-banner{
+  display:flex; align-items:flex-start; gap:10px;
+  background:#fdf1de; border:1px solid var(--gold); border-left:5px solid var(--vermillion);
+  border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:.86em; line-height:1.6; color:#5a3f1e;
+}
+.safety-banner .ic{font-size:1.4em; flex:0 0 auto;}
+.crew-pool{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; min-height:44px;
+  background:var(--card); border:1px dashed var(--parchment-dark); border-radius:10px; padding:10px;}
+.crew-chip{
+  width:56px; border-radius:10px; background:var(--gold-light); border:2px solid var(--gold);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:5px 2px 4px;
+  font-size:1.2em; cursor:grab; color:var(--jade-dark); text-align:center; position:relative;
+}
+.crew-chip .ctag{font-size:9px; font-weight:700; line-height:1.2; margin-top:1px; white-space:nowrap;}
+.crew-chip.ok .ctag{color:#5a6e63;}
+.crew-chip.warn{border-color:var(--vermillion); background:#fbe4de;}
+.crew-chip.warn .ctag{color:var(--vermillion);}
+.crew-chip.placed{opacity:.15; cursor:default;}
+.crew-chip.shake{animation:chipShake .4s ease;}
+@keyframes chipShake{
+  0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);} 80%{transform:translateX(4px);}
+}
+.leader-chip{
+  width:56px; border-radius:10px; background:var(--jade); border:2px solid var(--jade-dark);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:5px 2px 4px;
+  font-size:1.2em; color:var(--parchment); flex:0 0 auto; text-align:center;
+}
+.leader-chip .ctag{font-size:9px; font-weight:700; margin-top:1px;}
+.team-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+.team-box{
+  background:var(--parchment); border:2px dashed var(--parchment-dark); border-radius:10px;
+  padding:10px 12px; min-height:96px;
+}
+.team-box.over{border-color:var(--gold); background:#fff8e4;}
+.team-box .thead{display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:.88em; margin-bottom:2px;}
+.team-box .thead .hint{font-weight:400; font-size:.85em; color:#8a7d5f;}
+.team-box .warn-line{font-size:.72em; color:var(--vermillion); margin-bottom:6px;}
+.team-box .tbody{display:flex; flex-wrap:wrap; gap:6px; min-height:40px;}
+.team-box .member{
+  width:34px; height:34px; border-radius:50%; background:var(--gold-light); border:1px solid var(--gold);
+  display:flex; align-items:center; justify-content:center; font-size:1em;
+}
+.crew-note{font-size:.82em; color:#7a6f57; margin-top:12px; line-height:1.7;}
+
+/* ---------- LEVEL 1 ---------- */
+.npc-map{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:10px;
+}
+.npc{
+  background:var(--card); border:2px solid var(--parchment-dark); border-radius:12px;
+  padding:16px 10px; text-align:center; cursor:pointer; transition:.15s;
+  position:relative;
+}
+.npc:hover{border-color:var(--gold); transform:translateY(-2px);}
+.npc .emoji{font-size:2.1em;}
+.npc .name{font-weight:700; margin-top:4px; font-size:.9em;}
+.npc .unit{font-size:.75em; color:#7a6f57;}
+.npc.done{opacity:.55; cursor:default; border-color:var(--jade-light);}
+.npc.done::after{
+  content:"✔"; position:absolute; top:6px; right:8px; color:var(--jade);
+  font-weight:900; font-size:1.1em;
+}
+.npc.wrong::after{
+  content:"✕"; position:absolute; top:6px; right:8px; color:var(--vermillion);
+  font-weight:900; font-size:1.1em;
+}
+
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(21,45,38,0.55);
+  display:flex; align-items:center; justify-content:center; z-index:50; padding:16px;
+}
+.modal{
+  background:var(--card); border-radius:12px; max-width:460px; width:100%;
+  padding:22px; border:2px solid var(--gold); box-shadow:0 10px 40px var(--shadow);
+}
+.modal h3{color:var(--jade-dark);}
+.opt-btn{
+  display:block; width:100%; text-align:left; background:var(--parchment);
+  border:1px solid var(--parchment-dark); border-radius:8px; padding:10px 12px;
+  margin-top:9px; cursor:pointer; font-size:.9em; line-height:1.5;
+}
+.opt-btn:hover{border-color:var(--gold); background:#fff8e4;}
+
+.card-tray{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+.info-card{
+  background:var(--jade); color:var(--parchment); font-size:.72em; padding:6px 10px;
+  border-radius:6px; border:1px solid var(--gold);
+}
+
+/* ---------- LEVEL 2 ---------- */
+.step-label{
+  display:inline-block; background:var(--gold); color:var(--jade-dark); font-weight:700;
+  padding:4px 12px; border-radius:20px; font-size:.8em; margin-bottom:10px;
+}
+.hall{
+  background:var(--card); border:1px solid var(--parchment-dark); border-radius:12px;
+  padding:18px; min-height:230px;
+}
+.item-grid{display:flex; flex-wrap:wrap; gap:12px;}
+.item-btn{
+  background:var(--parchment); border:1px solid var(--parchment-dark); border-radius:9px;
+  width:74px; height:74px; font-size:1.6em; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; position:relative;
+}
+.item-btn:hover{border-color:var(--gold);}
+.item-btn.stored{opacity:.25; cursor:default;}
+.item-btn .lbl{position:absolute; bottom:2px; font-size:.32em; font-weight:700; color:#5a4f38;}
+
+.floor-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+.tile{
+  background:var(--parchment); border:1px solid var(--parchment-dark); border-radius:8px;
+  height:70px; display:flex; align-items:center; justify-content:center; font-size:1.6em; cursor:pointer;
+  position:relative; overflow:hidden;
+}
+.tile.dirty{background:#eee6d4; border-color:#b99a63;}
+.tile.clean{background:#e6f2e6;}
+.tile .stain{
+  position:absolute; width:34px; height:26px; background:
+    radial-gradient(circle at 30% 35%, rgba(94,66,30,0.55), rgba(94,66,30,0.28) 60%, transparent 75%);
+  border-radius:58% 42% 55% 45% / 48% 55% 45% 52%;
+}
+.tile .stain::before{
+  content:''; position:absolute; width:12px; height:10px; left:-10px; top:8px;
+  background:radial-gradient(circle, rgba(94,66,30,0.4), transparent 70%);
+  border-radius:50%;
+}
+.tile .stain::after{
+  content:''; position:absolute; width:9px; height:8px; right:-8px; top:-4px;
+  background:radial-gradient(circle, rgba(94,66,30,0.4), transparent 70%);
+  border-radius:50%;
+}
+.tile .checkmark{font-size:.9em; color:var(--jade);}
+
+.puzzle-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;}
+.puzzle-slot{
+  background:var(--parchment); border:2px dashed var(--parchment-dark); border-radius:10px;
+  min-height:64px; display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:.8em; font-weight:700; color:#8a7d5f; padding:6px;
+}
+.puzzle-slot.filled{border-style:solid; border-color:var(--jade); background:#e6f2ea; color:var(--jade-dark);}
+.puzzle-slot.reject{border-color:var(--vermillion); background:#fbe4de;}
+.puzzle-tray{display:flex; gap:10px; flex-wrap:wrap;}
+.puzzle-piece{
+  background:var(--gold-light); border:2px solid var(--gold); border-radius:10px 10px 10px 3px;
+  padding:8px 10px; font-size:.82em; font-weight:700; color:var(--jade-dark); cursor:grab;
+  min-width:64px; text-align:center; position:relative;
+}
+.puzzle-piece::after{
+  content:''; position:absolute; width:12px; height:12px; background:var(--gold-light); border:2px solid var(--gold);
+  border-radius:50%; right:-7px; top:50%; transform:translateY(-50%);
+}
+.puzzle-piece.placed{opacity:.15; cursor:default;}
+
+.slot-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px;}
+.layout-diagram{
+  background:var(--card); border:1px solid var(--parchment-dark); border-radius:10px;
+  padding:12px 14px; margin-bottom:14px;
+}
+.diagram-caption{font-size:.82em; color:#5a4f38; line-height:1.6; margin-bottom:8px;}
+.layout-diagram svg{width:100%; height:auto; display:block;}
+.slot{
+  background:var(--parchment); border:2px dashed var(--parchment-dark); border-radius:10px;
+  height:76px; display:flex; align-items:center; justify-content:center; font-size:1.3em; font-weight:700;
+  color:#8a7d5f; position:relative;
+}
+.slot.filled{border-style:solid; border-color:var(--jade); background:#e6f2ea; color:var(--jade-dark);}
+.slot.reject{border-color:var(--vermillion); background:#fbe4de;}
+.tray{display:flex; gap:10px; flex-wrap:wrap;}
+.table-token{
+  width:58px; height:58px; border-radius:50%; background:var(--gold-light);
+  border:2px solid var(--gold); display:flex; align-items:center; justify-content:center;
+  font-weight:900; cursor:grab; color:var(--jade-dark);
+}
+.table-token.placed{opacity:.15; cursor:default;}
+
+.checklist{display:flex; flex-direction:column; gap:10px;}
+.check-item{
+  display:flex; align-items:center; gap:10px; background:var(--parchment);
+  border:1px solid var(--parchment-dark); border-radius:8px; padding:10px 14px; cursor:pointer; font-size:.92em;
+}
+.check-item.checked{background:#e6f2ea; border-color:var(--jade); text-decoration:line-through; color:#5a6e63;}
+.check-item .box{width:20px; height:20px; border:2px solid var(--jade); border-radius:4px; flex:0 0 auto;}
+.check-item.checked .box{background:var(--jade);}
+
+.toast{
+  position:fixed; top:18px; left:50%; transform:translateX(-50%);
+  background:var(--vermillion); color:#fff; padding:10px 20px; border-radius:24px;
+  font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:80; font-size:.9em;
+  animation:toastIn .25s ease;
+}
+@keyframes toastIn{from{opacity:0; transform:translate(-50%,-14px);} to{opacity:1; transform:translate(-50%,0);}}
+.float-pop{position:fixed; pointer-events:none; z-index:90; font-weight:900; font-size:1.3em; animation:floatUp .9s ease forwards;}
+@keyframes floatUp{from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-42px);}}
+.confetti-piece{position:fixed; top:-12px; z-index:95; border-radius:2px; opacity:.9; animation:confettiFall linear forwards;}
+@keyframes confettiFall{to{top:110vh; transform:rotate(720deg);}}
+.pop-anim{animation:popScale .3s ease;}
+@keyframes popScale{0%{transform:scale(1);} 45%{transform:scale(1.18);} 100%{transform:scale(1);}}
+
+/* ---------- LEVEL 2（拖曳互動版）---------- */
+.storage-hall{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+.storage-zone{
+  flex:1; min-width:150px; background:var(--card); border:2px dashed var(--parchment-dark);
+  border-radius:12px; padding:10px 12px; min-height:110px; text-align:center;
+}
+.storage-zone h4{margin:0 0 4px; font-size:.92em; color:var(--jade-dark);}
+.storage-zone .stored-list{display:flex; flex-wrap:wrap; gap:5px; justify-content:center; min-height:28px;}
+.storage-zone .stored-list span{font-size:1.2em;}
+.item-tray{display:flex; flex-wrap:wrap; gap:14px; justify-content:center; min-height:82px; padding:6px 0;}
+.drag-chip{
+  width:66px; height:66px; border-radius:12px; background:var(--parchment); border:2px solid var(--parchment-dark);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:1.5em;
+  touch-action:none; cursor:pointer; position:relative; user-select:none;
+}
+.drag-chip .lbl2{font-size:.3em; font-weight:700; color:#5a4f38; margin-top:2px; white-space:nowrap;}
+.drag-chip.dragging{opacity:.88; z-index:60; box-shadow:0 8px 18px rgba(0,0,0,.25); cursor:grabbing;}
+.drag-chip.selected{border-color:var(--vermillion); box-shadow:0 0 0 4px rgba(150,60,44,0.3);}
+.drag-chip.stored{display:none;}
+.hall-area{cursor:default;}
+.hall-area.pickup{cursor:copy;}
+.drag-chip.shake{animation:chipShake .4s ease;}
+
+.floor-wrap{position:relative;}
+.tile .stain{cursor:pointer;}
+.tile.dirty{cursor:pointer;}
+
+.ruler-toolbar{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.ruler-status{font-size:.82em; color:#5a4f38; font-weight:700;}
+.ruler-status.ok{color:var(--jade);}
+.ruler-status.bad{color:var(--vermillion);}
+.hall-scroll{
+  overflow-x:auto; overflow-y:hidden; border-radius:12px; border:1px solid var(--parchment-dark);
+  margin-bottom:12px; -webkit-overflow-scrolling:touch; background:var(--card);
+}
+.hall-area{
+  position:relative; margin:0; overflow:hidden;
+}
+.grid-line{position:absolute; background:rgba(199,154,46,0.28);}
+.grid-line.v{top:0; bottom:0; width:1px;}
+.grid-line.h{left:0; right:0; height:1px;}
+.grid-label{position:absolute; font-size:9px; color:#a99a6f; pointer-events:none;}
+.grid-label.vlbl{top:1px;}
+.grid-label.hlbl{left:1px;}
+.ruler-handle{
+  position:absolute; left:8px; top:8px; width:48px; height:48px; border-radius:50%;
+  background:var(--gold-light); border:2px solid var(--gold); display:flex; align-items:center; justify-content:center;
+  font-size:1.5em; touch-action:none; cursor:grab; z-index:30; user-select:none;
+}
+.ruler-handle.dragging{cursor:grabbing; z-index:60; box-shadow:0 8px 18px rgba(0,0,0,.3);}
+.ruler-target{
+  position:absolute; width:48px; height:48px; border-radius:50%; border:2px dashed var(--vermillion);
+  display:flex; align-items:center; justify-content:center; font-size:1.3em; opacity:.6; pointer-events:none;
+}
+.marker-placed{
+  position:absolute; width:40px; height:40px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; font-size:1.3em; pointer-events:none; z-index:20;
+}
+.marker-placed .mk-lbl{font-size:.28em; font-weight:700; color:#3d6a58; white-space:nowrap; background:#fff; padding:0 3px; border-radius:4px;}
+.table-chip{
+  position:absolute; width:48px; height:48px; border-radius:50%; background:var(--gold-light); border:2px solid var(--gold);
+  display:flex; align-items:center; justify-content:center; font-weight:900; color:var(--jade-dark);
+  touch-action:none; cursor:grab; user-select:none;
+}
+.table-chip.dragging{cursor:grabbing; z-index:60; box-shadow:0 8px 18px rgba(0,0,0,.3);}
+.measure-line{position:absolute; height:2px; background:var(--vermillion); transform-origin:0 0; z-index:40; pointer-events:none;}
+.measure-line.ok{background:var(--jade);}
+.measure-label{
+  position:absolute; font-size:.72em; font-weight:700; background:#fff; padding:1px 6px; border-radius:8px;
+  border:1px solid var(--parchment-dark); z-index:41; pointer-events:none; white-space:nowrap;
+}
+.measure-label.ok{color:var(--jade); border-color:var(--jade);}
+.measure-label.bad{color:var(--vermillion); border-color:var(--vermillion);}
+
+/* ---------- LEVEL 3 ---------- */
+.pool{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+.token{
+  background:var(--card); border:2px solid var(--parchment-dark); border-radius:9px;
+  padding:7px 8px; width:84px; cursor:grab; text-align:center; position:relative;
+}
+.token.busy{opacity:.45; cursor:not-allowed;}
+.token .emoji{font-size:1.25em;}
+.token .tname{font-size:.68em; font-weight:700; margin-top:1px;}
+.stamina-bar{background:var(--parchment-dark); height:5px; border-radius:4px; margin-top:4px; overflow:hidden;}
+.stamina-fill{height:100%; background:var(--jade); transition:width .3s;}
+.stamina-fill.low{background:var(--vermillion);}
+.rest-btn{
+  margin-top:4px; font-size:.6em; border:1px solid var(--gold); background:none; color:#7a6224;
+  border-radius:12px; padding:1px 6px; cursor:pointer;
+}
+
+.node-flow{display:flex; flex-direction:column; gap:8px;}
+.node{
+  background:var(--card); border:2px solid var(--parchment-dark); border-radius:10px;
+  padding:14px 16px; opacity:.5; transition:.2s;
+}
+.node.compact{
+  padding:8px 12px; opacity:.7; display:flex; align-items:center; justify-content:space-between;
+}
+.node.compact .ntitle{font-weight:700; font-size:.85em; margin:0;}
+.node.active{opacity:1; border-color:var(--gold);}
+.node.done.compact{opacity:.75; border-color:var(--jade); background:#e9f3ec;}
+.node .ntitle{font-weight:700; font-size:.95em; display:flex; justify-content:space-between; align-items:center;}
+.node .seq{margin-top:8px; display:flex; gap:8px;}
+.node .seq-step{
+  width:34px; height:34px; border-radius:50%; background:var(--parchment); border:1px solid var(--parchment-dark);
+  display:flex; align-items:center; justify-content:center; font-size:1.05em;
+}
+.node .seq-step.done{background:var(--jade); color:#fff; border-color:var(--jade);}
+.node .seq-step.next{border-color:var(--gold); box-shadow:0 0 0 3px rgba(199,154,46,0.25);}
+.dropzone{
+  margin-top:8px; border:2px dashed var(--parchment-dark); border-radius:8px; padding:8px;
+  text-align:center; font-size:.78em; color:#8a7d5f; min-height:32px;
+}
+.dropzone.over{border-color:var(--gold); background:#fff8e4;}
+
+/* ---------- END SCREEN ---------- */
+.grade-badge{
+  width:120px; height:120px; border-radius:50%; margin:6px auto 10px;
+  background:radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold));
+  display:flex; align-items:center; justify-content:center; font-family:'Noto Serif TC',serif;
+  font-size:3em; font-weight:900; color:var(--jade-dark); border:4px solid var(--jade);
+}
+.score-row{display:flex; justify-content:space-between; max-width:340px; margin:4px auto; font-size:.92em;}
+.knowledge-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;}
+.k-card{
+  background:var(--jade); color:var(--parchment); border-radius:10px; padding:12px 14px;
+  font-size:.82em; line-height:1.5; border:1px solid var(--gold);
+}
+.k-card b{color:var(--gold-light); display:block; margin-bottom:3px; font-size:.95em;}
+
+.timerbar{height:8px; background:var(--parchment-dark); border-radius:4px; overflow:hidden; margin-bottom:16px;}
+.timerbar-fill{height:100%; background:var(--gold); transition:width .3s linear;}
+.timerbar-fill.danger{background:var(--vermillion);}
+
+@media (max-width:640px){
+  .goal-grid{grid-template-columns:repeat(2,1fr);}
+  .npc-map{grid-template-columns:repeat(2,1fr);}
+  .floor-grid{grid-template-columns:repeat(3,1fr);}
+  .slot-grid{grid-template-columns:repeat(2,1fr);}
+  .knowledge-grid{grid-template-columns:1fr;}
+  .team-grid{grid-template-columns:1fr;}
+  .puzzle-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="brand">🏮 機動大作戰：換場特攻隊
+      <small>機動組實務培訓線上遊戲｜以「法會轉功德宴」個案為例</small>
+    </div>
+    <div id="hud">
+      <div class="stat"><b id="hud-level">-</b><span>關卡</span></div>
+      <div class="stat"><b id="hud-time">-</b><span>剩餘秒數</span></div>
+      <div class="stat"><b id="hud-score">0</b><span>累積分數</span></div>
+    </div>
+  </div>
+
+  <div id="stage">
+
+    <!-- START -->
+    <section id="screen-start" class="screen active">
+      <div class="hero">
+        <div class="hero-emoji">🏯➡️🎉</div>
+        <h1>換場特攻隊</h1>
+        <p class="lead">法會秒變功德宴，你辦得到嗎？</p>
+      </div>
+      <div class="goal-grid">
+        <div class="goal-card"><span class="num">1</span><br>🧑‍🤝‍🧑 <b>分工關</b></div>
+        <div class="goal-card"><span class="num">2</span><br>🗣️ <b>溝通關</b></div>
+        <div class="goal-card"><span class="num">3</span><br>⏱️ <b>換場關</b></div>
+        <div class="goal-card"><span class="num">4</span><br>📦 <b>撤場關</b></div>
+      </div>
+      <div class="center">
+        <button class="btn gold" id="btn-start">開始遊戲 ▶</button>
+      </div>
+    </section>
+
+    <!-- LEVEL 0：人力分配規劃 -->
+    <section id="screen-level0" class="screen">
+      <span class="step-label">第一關．人力精準佈署</span>
+      <h2>🧑‍🤝‍🧑 組長1人＋組員9人，怎麼分工？</h2>
+      <div class="case-box">法會結束到功德宴開席，只有一個組長帶九位組員。人力分配不當，換場就會手忙腳亂——把組員拖到對應的任務框中，規劃出最合理的分工吧！每位組員身上的圖示代表個人狀況（如感冒、年紀較大等），拖錯任務框會被退回喔！</div>
+      <div class="crew-pool" id="l0-pool"></div>
+      <div class="team-grid" id="l0-teams"></div>
+      <div class="crew-note">💡 提示：拆收桌椅最耗人力、清潔次之，運輸與現場支援可以少一點，但至少各留 1 人待命；感冒者避免安排清潔組，年長者、腰傷者、腳傷者避免安排搬運粗重工作。</div>
+      <div class="center" style="margin-top:16px;">
+        <button class="btn gold" id="btn-l0-confirm" disabled>✅ 確認分工，出發！</button>
+      </div>
+    </section>
+
+    <!-- LEVEL 1 -->
+    <section id="screen-level1" class="screen">
+      <span class="step-label">第二關．溝通大考驗</span>
+      <h2>🗣️ 找對人，問對話！</h2>
+      <div class="timerbar"><div class="timerbar-fill" id="l1-timerfill"></div></div>
+      <div class="npc-map" id="npc-map"></div>
+      <div class="card-tray" id="l1-cards"></div>
+    </section>
+
+    <!-- LEVEL 2 -->
+    <section id="screen-level2" class="screen">
+      <span class="step-label" id="l2-steplabel">第三關．黃金換場30分鐘</span>
+      <h2 id="l2-title">撤除拜具</h2>
+      <div class="timerbar"><div class="timerbar-fill" id="l2-timerfill"></div></div>
+      <div class="hall" id="l2-hall"></div>
+    </section>
+
+    <!-- LEVEL 3 -->
+    <section id="screen-level3" class="screen">
+      <span class="step-label">第四關．圓滿撤場大處置</span>
+      <h2>📦 拖人力卡上工！</h2>
+      <div class="timerbar"><div class="timerbar-fill" id="l3-timerfill"></div></div>
+      <div class="pool" id="l3-pool"></div>
+      <div class="node-flow" id="l3-nodes"></div>
+    </section>
+
+    <!-- END -->
+    <section id="screen-end" class="screen">
+      <div class="center">
+        <div class="grade-badge" id="grade-badge">S</div>
+        <h2>培訓結業！</h2>
+      </div>
+      <div class="score-row"><span>第一關．人力精準佈署</span><b id="score-l0">0</b></div>
+      <div class="score-row"><span>第二關．溝通大考驗</span><b id="score-l1">0</b></div>
+      <div class="score-row"><span>第三關．黃金換場30分鐘</span><b id="score-l2">0</b></div>
+      <div class="score-row"><span>第四關．圓滿撤場大處置</span><b id="score-l3">0</b></div>
+      <div class="divider"></div>
+      <h3 class="center">🎴 機動 SOP 小撇步卡</h3>
+      <div class="knowledge-grid" id="knowledge-grid"></div>
+      <div class="center" style="margin-top:22px;">
+        <button class="btn gold" id="btn-restart">重新挑戰 ↺</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== 共用工具 ===================== */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+function showScreen(id){
+  $all('.screen').forEach(function(s){ s.classList.remove('active'); });
+  $('#'+id).classList.add('active');
+}
+function setHud(levelText, timeText, score){
+  $('#hud-level').textContent = levelText;
+  $('#hud-time').textContent = timeText;
+  $('#hud-score').textContent = score;
+}
+function toast(msg){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2400);
+}
+function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+function floatPopAt(el, text, color){
+  var r = el.getBoundingClientRect();
+  var p = document.createElement('div');
+  p.className = 'float-pop';
+  p.textContent = text;
+  p.style.left = (r.left + r.width/2 - 10)+'px';
+  p.style.top = (r.top)+'px';
+  p.style.color = color || '#26443a';
+  document.body.appendChild(p);
+  setTimeout(function(){ p.remove(); }, 900);
+  el.classList.add('pop-anim');
+  setTimeout(function(){ el.classList.remove('pop-anim'); }, 300);
+}
+function confettiBurst(n){
+  var colors = ['#c79a2e','#26443a','#963c2c','#e7c766'];
+  for(var i=0;i<(n||24);i++){
+    var p = document.createElement('div');
+    var size = 6+Math.random()*6;
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random()*100)+'vw';
+    p.style.width = size+'px';
+    p.style.height = size+'px';
+    p.style.background = colors[i%colors.length];
+    p.style.animationDuration = (1.4+Math.random()*1.2)+'s';
+    document.body.appendChild(p);
+    (function(el){ setTimeout(function(){ el.remove(); }, 3000); })(p);
+  }
+}
+
+var TOTAL_SCORE = { l0:0, l1:0, l2:0, l3:0 };
+function scoreSum(){ return TOTAL_SCORE.l0+TOTAL_SCORE.l1+TOTAL_SCORE.l2+TOTAL_SCORE.l3; }
+
+/* ===================== 第一關：人力分配規劃 ===================== */
+var TEAMS = [
+  { type:'chai', name:'拆收組', emoji:'🪑', min:3, max:4 },
+  { type:'yun',  name:'運輸組', emoji:'🚚', min:1, max:2 },
+  { type:'qing', name:'清潔組', emoji:'🧹', min:2, max:3 },
+  { type:'ji',   name:'支援組', emoji:'🛠️', min:1, max:2 }
+];
+var MEMBERS = [
+  { id:1, emoji:'🤧', tag:'感冒未癒', restrict:['qing'], reason:'感冒未癒，跑動吸粉塵、近距離接觸餐飲區都不合適，不宜安排清潔組。' },
+  { id:2, emoji:'🤧', tag:'感冒未癒', restrict:['qing'], reason:'感冒未癒，跑動吸粉塵、近距離接觸餐飲區都不合適，不宜安排清潔組。' },
+  { id:3, emoji:'👴', tag:'年紀較大', restrict:['yun'], reason:'年紀較大不宜搬重物，避免安排到需要扛抬的運輸組。' },
+  { id:4, emoji:'👵', tag:'年紀較大', restrict:['yun'], reason:'年紀較大不宜搬重物，避免安排到需要扛抬的運輸組。' },
+  { id:5, emoji:'🤕', tag:'腰傷未癒', restrict:['yun','chai'], reason:'腰傷未癒不宜搬重物或粗重拆收工作，運輸組、拆收組都不合適。' },
+  { id:6, emoji:'🦵', tag:'腳傷未癒', restrict:['yun','chai'], reason:'腳傷未癒不宜久站久走，運輸組、拆收組都不合適。' },
+  { id:7, emoji:'🙂', tag:'體力佳', restrict:[], reason:'' },
+  { id:8, emoji:'🙂', tag:'體力佳', restrict:[], reason:'' },
+  { id:9, emoji:'🙂', tag:'體力佳', restrict:[], reason:'' }
+];
+function memberOf(id){ return MEMBERS.filter(function(m){ return m.id===id; })[0]; }
+function teamWarnLine(t){
+  var tags = [];
+  MEMBERS.forEach(function(m){
+    if(m.restrict.indexOf(t.type) !== -1 && tags.indexOf(m.tag) === -1) tags.push(m.tag);
+  });
+  return tags.length ? '⚠️ '+tags.join('、')+' 不宜安排' : '';
+}
+var L0 = {};
+function startLevel0(){
+  L0 = { members:MEMBERS.map(function(m){return m.id;}), placed:{}, assign:{ chai:[], yun:[], qing:[], ji:[] } };
+  showScreen('screen-level0');
+  renderL0();
+  setHud('第一關', '-', scoreSum());
+  $('#btn-l0-confirm').disabled = true;
+}
+function renderL0(){
+  var pool = $('#l0-pool');
+  pool.innerHTML = '<div class="leader-chip" title="組長"><span>🧑‍✈️</span><span class="ctag">組長</span></div>';
+  L0.members.forEach(function(id){
+    var m = memberOf(id);
+    var chip = document.createElement('div');
+    chip.className = 'crew-chip' + (m.restrict.length ? ' warn' : ' ok') + (L0.placed[id] ? ' placed' : '');
+    chip.id = 'crew-'+id;
+    chip.title = m.reason || '體力佳，各組皆可安排';
+    chip.innerHTML = '<span>'+m.emoji+'</span><span class="ctag">'+m.tag+'</span>';
+    chip.draggable = !L0.placed[id];
+    chip.addEventListener('dragstart', function(e){
+      if(L0.placed[id]) { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/plain', String(id));
+    });
+    pool.appendChild(chip);
+  });
+
+  var teams = $('#l0-teams');
+  teams.innerHTML = '';
+  TEAMS.forEach(function(t){
+    var box = document.createElement('div');
+    box.className = 'team-box';
+    box.id = 'team-'+t.type;
+    var members = L0.assign[t.type];
+    var warnLine = teamWarnLine(t);
+    box.innerHTML =
+      '<div class="thead"><span>'+t.emoji+' '+t.name+'</span><span class="hint">建議 '+t.min+'~'+t.max+' 人｜目前 '+members.length+' 人</span></div>'+
+      (warnLine ? '<div class="warn-line">'+warnLine+'</div>' : '')+
+      '<div class="tbody">'+members.map(function(id){ return '<div class="member">'+memberOf(id).emoji+'</div>'; }).join('')+'</div>';
+    box.addEventListener('dragover', function(e){ e.preventDefault(); box.classList.add('over'); });
+    box.addEventListener('dragleave', function(){ box.classList.remove('over'); });
+    box.addEventListener('drop', function(e){
+      e.preventDefault();
+      box.classList.remove('over');
+      var id = Number(e.dataTransfer.getData('text/plain'));
+      if(!id || L0.placed[id]) return;
+      var m = memberOf(id);
+      if(m.restrict.indexOf(t.type) !== -1){
+        toast('❌ '+m.tag+'不適合'+t.name+'：'+m.reason);
+        var chipEl = $('#crew-'+id);
+        if(chipEl){
+          chipEl.classList.add('shake');
+          setTimeout(function(){ chipEl.classList.remove('shake'); }, 400);
+        }
+        return;
+      }
+      L0.placed[id] = t.type;
+      L0.assign[t.type].push(id);
+      renderL0();
+      floatPopAt(box, '✓', '#26443a');
+      var totalPlaced = Object.keys(L0.placed).length;
+      $('#btn-l0-confirm').disabled = totalPlaced < L0.members.length;
+    });
+    teams.appendChild(box);
+  });
+}
+function finishLevel0(){
+  var score = 100;
+  var notes = [];
+  TEAMS.forEach(function(t){
+    var n = L0.assign[t.type].length;
+    if(n < t.min){ score -= 15; notes.push(t.name+'人力偏少'); }
+    else if(n > t.max){ score -= 8; notes.push(t.name+'人力過多，其他組會缺人'); }
+  });
+  score = clamp(score, 0, 100);
+  TOTAL_SCORE.l0 = score;
+  toast(notes.length ? '⚠️ 分工可再優化：'+notes.join('、') : '🏁 分工超到位！'+score+' 分！');
+  confettiBurst(14);
+  setTimeout(startLevel1, 1000);
+}
+$('#btn-l0-confirm').addEventListener('click', finishLevel0);
+
+/* ===================== 第二關：溝通大考驗 ===================== */
+var npcData = [
+  { id:'zg', name:'總幹事', unit:'籌備組', emoji:'🧑‍💼',
+    open:'機動組長，法會跟功德宴緊接著進行，時間非常緊迫，你有什麼要確認的嗎？',
+    correct:'請問早上開示何時結束？我們有多少「黃金換場時間」？',
+    wrong:['請問總幹事，今天中午功德宴預計吃幾道菜？','請問今天蒞臨的貴賓有哪幾位？'],
+    info:'🎯 取得情報：開示 11:30 結束，12:00 開始午宴，黃金換場時間僅有 30 分鐘！' },
+  { id:'xg', name:'心燈組長', unit:'心燈組', emoji:'🙏',
+    open:'阿彌陀佛，大殿拜懺結束後，法器需要非常恭敬且快速地下架收納。',
+    correct:'請問拜墊、經架的撤收順序與存放位置？',
+    wrong:['請問拜懺結束後，信眾大概幾點會全部離開大殿？','功德宴開桌時，大殿的冷氣溫度要調幾度？'],
+    info:'🎯 取得情報：拜墊先疊放後推至後方心燈室，經架歸位至西單櫃，保持動線淨空。' },
+  { id:'xj', name:'香積主廚', unit:'香積組', emoji:'🍲',
+    open:'機動組來得正好！我們大寮熱菜準備得差不多了，場地那邊準備得怎麼樣？',
+    correct:'主廚，請問一共有幾道菜？窗口是誰？幾點拿菜？',
+    wrong:['主廚，今天師兄們煮的菜色看起來很好吃耶！','主廚，後廚洗碗跟切菜的人手夠不夠？機動組要支援嗎？'],
+    info:'🎯 取得情報：一共12道菜，窗口是傳O，11:45開始上菜。' },
+  { id:'ys', name:'視訊組長', unit:'音響視訊組', emoji:'🎚️',
+    open:'我們剛才結束講經開示的收音，等下功德宴要切換成背景音樂與影片畫面。',
+    correct:'組長，請問現場地面線路有做防踩保護膠帶嗎？',
+    wrong:['組長，這套音響設備看起來很高級，是新買的嗎？','組長，等一下宴席背景音樂要放哪一張佛曲 CD？'],
+    info:'🎯 取得情報：主舞台線路已加蓋壓線槽，有線麥克風需先收，避免搬運桌椅時拉扯線路。' },
+  { id:'jt', name:'照客組長', unit:'交通接待組', emoji:'🚦',
+    open:'拜懺一結束，大殿會有好幾百人同時湧出，我們需要配合動線管制。',
+    correct:'組長，請幫忙將信眾疏散引導至2F用茶點，避免大家滯留在大殿影響換場安全。',
+    wrong:['組長，請問休息室安排誰去招呼？','組長，今天有需要安排機動組支援引導嗎？'],
+    info:'🎯 取得情報：接待組將於 11:30 啟動「人流分道」，將群眾引至2F，大殿實施 20 分鐘淨空換場。' },
+  { id:'hb', name:'環保組長', unit:'環保清潔組', emoji:'🧹',
+    open:'午宴期間的垃圾量會很大，餐後廚餘與資源回收需要先做好定點與分類規劃。',
+    correct:'組長，請問午宴後的廚餘、垃圾與資源回收集中點設在哪裡？',
+    wrong:['組長，請問垃圾車今天中午幾點會來載走？','組長，現場的分類回收垃圾架夠用嗎？'],
+    info:'🎯 取得情報：廚餘與垃圾集中點設於後方；機動組需於換場時自行負責地面推拖。' }
+];
+
+var L1 = { time:90, timer:null, doneCount:0, score:0, collected:[] };
+
+function startLevel1(){
+  L1 = { time:90, timer:null, doneCount:0, score:0, collected:[] };
+  renderNpcMap();
+  $('#l1-cards').innerHTML = '';
+  showScreen('screen-level1');
+  updateL1Hud();
+  L1.timer = setInterval(function(){
+    L1.time--;
+    updateL1Hud();
+    if(L1.time <= 0){ finishLevel1(); }
+  }, 1000);
+}
+function updateL1Hud(){
+  setHud('第二關', L1.time+'s', scoreSum());
+  var pct = clamp(L1.time/90*100,0,100);
+  var fill = $('#l1-timerfill');
+  fill.style.width = pct+'%';
+  fill.className = 'timerbar-fill' + (pct<25?' danger':'');
+}
+function renderNpcMap(){
+  var map = $('#npc-map');
+  map.innerHTML = '';
+  npcData.forEach(function(n){
+    var div = document.createElement('div');
+    div.className = 'npc';
+    div.id = 'npc-'+n.id;
+    div.innerHTML = '<div class="emoji">'+n.emoji+'</div><div class="name">'+n.name+'</div><div class="unit">'+(n.unit||'')+'</div>';
+    div.addEventListener('click', function(){ openNpcDialog(n); });
+    map.appendChild(div);
+  });
+}
+function openNpcDialog(n){
+  var el = $('#npc-'+n.id);
+  if(el.classList.contains('done') || el.classList.contains('wrong')) return;
+  var opts = [{text:n.correct, correct:true}].concat(n.wrong.map(function(w){return {text:w, correct:false};}));
+  opts = opts.sort(function(){ return Math.random()-0.5; });
+
+  var backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  var html = '<div class="modal"><h3>'+n.emoji+' '+n.name+'</h3>'+
+    (n.open ? '<p style="font-size:.85em;color:#4a4030;line-height:1.6;">「'+n.open+'」</p>' : '')+
+    '<p style="font-size:.85em;color:#6b5f45;">選一句話：</p>';
+  opts.forEach(function(o,i){
+    html += '<button class="opt-btn" data-i="'+i+'">'+o.text+'</button>';
+  });
+  html += '</div>';
+  backdrop.innerHTML = html;
+  document.body.appendChild(backdrop);
+
+  backdrop.querySelectorAll('.opt-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var idx = +btn.getAttribute('data-i');
+      var chosen = opts[idx];
+      backdrop.remove();
+      if(chosen.correct){
+        el.classList.add('done');
+        L1.score += 15;
+        L1.collected.push(n.info);
+        var c = document.createElement('div');
+        c.className = 'info-card';
+        c.textContent = n.info;
+        $('#l1-cards').appendChild(c);
+        floatPopAt(el, '+15', '#26443a');
+        toast('🎯 答對了！');
+      } else {
+        el.classList.add('wrong');
+        floatPopAt(el, '✕', '#963c2c');
+        toast('❌ 問錯了');
+      }
+      L1.doneCount++;
+      if(L1.doneCount >= npcData.length){ finishLevel1(); }
+      updateL1Hud();
+    });
+  });
+}
+function finishLevel1(){
+  if(L1.timer){ clearInterval(L1.timer); L1.timer = null; }
+  var finalScore = clamp(Math.round(L1.score * (100/(npcData.length*15))), 0, 100);
+  TOTAL_SCORE.l1 = finalScore;
+  toast('🏁 第二關 '+finalScore+' 分！');
+  confettiBurst(16);
+  setTimeout(startLevel2, 900);
+}
+
+/* ===================== 第三關：黃金換場30分鐘 ===================== */
+var L2 = {};
+var TABLE_COUNT = 12;
+var HALL_W = 640, HALL_H = 360, GRID_STEP = 60;
+var L2_ITEMS = [
+  {id:'p1',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p2',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
+  {id:'p3',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p4',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
+  {id:'p5',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p6',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
+  {id:'j1',emoji:'📜',lbl:'經架', target:'xidan'},{id:'j2',emoji:'📜',lbl:'經架', target:'xidan'},
+  {id:'z1',emoji:'⛩️',lbl:'主法桌', heavy:true, target:'xindeng'}
+];
+var STORAGE_ZONES = [
+  {id:'xidan', name:'🗄️ 左邊櫃子', hint:'經架歸位這裡'},
+  {id:'xindeng', name:'🛕 心燈室', hint:'拜墊、主法桌先送這裡'}
+];
+var MARKER_DEFS = [
+  {id:'altar', emoji:'🛕', lbl:'主壇方向'},
+  {id:'exit', emoji:'🚪', lbl:'出入口方向'}
+];
+
+/* 共用：指標拖曳（滑鼠／觸控通用） */
+function makeDraggable(el, opts){
+  opts = opts || {};
+  el.style.touchAction = 'none';
+  var sx=0, sy=0, dragging=false;
+  el.addEventListener('pointerdown', function(e){
+    if(opts.canDrag && !opts.canDrag()){
+      if(opts.onTap) opts.onTap();
+      return;
+    }
+    e.preventDefault();
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    el.classList.add('dragging');
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  el.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    el.style.transform = 'translate('+dx+'px,'+dy+'px)';
+  });
+  function finish(e){
+    if(!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    var rect = el.getBoundingClientRect();
+    var cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    el.style.transform = '';
+    if(opts.onEnd) opts.onEnd(cx, cy, el);
+  }
+  el.addEventListener('pointerup', finish);
+  el.addEventListener('pointercancel', finish);
+}
+
+function startLevel2(){
+  L2 = { time:110, timer:null, step:0, penalty:0, storedCount:0,
+         dirtyTiles:new Set([1,3,6]),
+         gridLaid:false, markers:{},
+         tablePositions:{},
+         checked:{}, eventsFired:{a:false,b:false} };
+  showScreen('screen-level2');
+  renderL2Step();
+  updateL2Hud();
+  L2.timer = setInterval(function(){
+    L2.time--;
+    updateL2Hud();
+    if(L2.time <= 0){ finishLevel2(true); }
+  }, 1000);
+  setTimeout(function(){ fireEventA(); }, 18000);
+  setTimeout(function(){ fireEventB(); }, 42000);
+}
+function updateL2Hud(){
+  setHud('第三關', L2.time+'s', scoreSum());
+  var pct = clamp(L2.time/110*100,0,100);
+  var fill = $('#l2-timerfill');
+  fill.style.width = pct+'%';
+  fill.className = 'timerbar-fill' + (pct<25?' danger':'');
+}
+function fireEventA(){
+  if(!L2 || L2.time<=0 || L2.step>=3) return;
+  L2.eventsFired.a = true;
+  L2.time = Math.max(5, L2.time - 8);
+  toast('⚠️ 延誤－8秒！');
+  updateL2Hud();
+}
+function fireEventB(){
+  if(!L2 || L2.time<=0) return;
+  L2.eventsFired.b = true;
+  if(L2.step === 1){
+    L2.dirtyTiles.add(2);
+    toast('⚠️ 打翻茶水，地上又髒了！');
+    renderL2Step();
+  } else {
+    L2.penalty += 5;
+    toast('⚠️ 突發狀況，扣分！');
+  }
+}
+function openLiftDialog(it, chipEl, zoneId){
+  var backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML =
+    '<div class="modal"><h3>🦺 '+it.emoji+' '+it.lbl+'較重，怎麼搬？</h3>'+
+    '<p style="font-size:.85em;color:#6b5f45;">選一種搬運方式：</p>'+
+    '<button class="opt-btn" data-ok="1">🧎‍♂️🧎‍♀️ 蹲低用腿力，兩人合力抬起</button>'+
+    '<button class="opt-btn" data-ok="0">🙇 彎腰用背扛，一個人硬搬</button>'+
+    '</div>';
+  document.body.appendChild(backdrop);
+  backdrop.querySelectorAll('.opt-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var ok = btn.getAttribute('data-ok') === '1';
+      backdrop.remove();
+      commitItemStore(it, chipEl, zoneId, ok);
+    });
+  });
+}
+function commitItemStore(it, chipEl, zoneId, safe){
+  chipEl.classList.add('stored');
+  L2.storedCount++;
+  var listEl = $('#zone-list-'+zoneId);
+  if(listEl){
+    var span = document.createElement('span');
+    span.textContent = it.emoji;
+    listEl.appendChild(span);
+  }
+  if(it.heavy){
+    if(safe){
+      toast('👍 安全搬運，姿勢滿分！');
+    } else {
+      toast('⚠️ 閃到腰了！搬運扣分');
+      L2.penalty += 10;
+    }
+  }
+  if(L2.storedCount >= L2_ITEMS.length){
+    toast('✅ 歸位完成！');
+    setTimeout(function(){ L2.step = 1; renderL2Step(); }, 500);
+  }
+}
+function handleItemDrop(cx, cy, chipEl, it){
+  var zones = $all('.storage-zone');
+  var hit = null;
+  zones.forEach(function(z){
+    var r = z.getBoundingClientRect();
+    if(cx>=r.left && cx<=r.right && cy>=r.top && cy<=r.bottom) hit = z;
+  });
+  if(!hit) return;
+  var zoneId = hit.getAttribute('data-zone');
+  if(zoneId !== it.target){
+    toast('❌ 位置不對，'+it.lbl+'不是放這裡');
+    chipEl.classList.add('shake');
+    setTimeout(function(){ chipEl.classList.remove('shake'); }, 400);
+    L2.penalty += 5;
+    return;
+  }
+  if(it.heavy){
+    openLiftDialog(it, chipEl, zoneId);
+  } else {
+    commitItemStore(it, chipEl, zoneId, true);
+  }
+}
+
+/* -------- 步驟二：抹布拖曳清潔 -------- */
+function cleanTile(idx){
+  if(!L2.dirtyTiles.has(idx)) return;
+  var tileEl = document.querySelector('.tile[data-idx="'+idx+'"]');
+  if(tileEl) floatPopAt(tileEl, '✨', '#3d6a58');
+  L2.dirtyTiles.delete(idx);
+  if(L2.dirtyTiles.size === 0){
+    toast('✅ 清潔完成！');
+    setTimeout(function(){ L2.step = 2; renderL2Step(); }, 500);
+  } else {
+    toast('🧽 清乾淨了一塊！');
+    renderL2Step();
+  }
+}
+
+/* -------- 步驟三：場佈圖 / 皮尺定位 / 排桌 -------- */
+function floorPlanSvg(){
+  return '<svg viewBox="0 0 420 230" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">' +
+    '<rect x="8" y="8" width="404" height="214" fill="none" stroke="#c9bd9e" stroke-width="1"/>' +
+    '<g stroke="#5a4f38" stroke-width="1.5" fill="#fdf8ec">' +
+      '<rect x="8" y="8" width="64" height="52"/><rect x="72" y="8" width="64" height="52"/>' +
+      '<rect x="136" y="8" width="64" height="52"/><rect x="200" y="8" width="64" height="52"/>' +
+      '<rect x="264" y="8" width="64" height="52"/>' +
+      '<rect x="328" y="60" width="84" height="52"/><rect x="328" y="112" width="84" height="52"/>' +
+      '<rect x="8" y="170" width="64" height="52"/><rect x="72" y="170" width="64" height="52"/>' +
+      '<rect x="136" y="170" width="64" height="52"/><rect x="200" y="170" width="64" height="52"/>' +
+      '<rect x="264" y="170" width="64" height="52"/>' +
+    '</g>' +
+    '<g font-size="15" font-weight="700" fill="#8a2f22" text-anchor="middle">' +
+      '<text x="40" y="39">1</text><text x="104" y="39">2</text><text x="168" y="39">3</text>' +
+      '<text x="232" y="39">4</text><text x="296" y="39">5</text>' +
+      '<text x="370" y="91">6</text><text x="370" y="143">7</text>' +
+      '<text x="296" y="201">8</text><text x="232" y="201">9</text><text x="168" y="201">10</text>' +
+      '<text x="104" y="201">11</text><text x="40" y="201">12</text>' +
+    '</g>' +
+    '<text x="210" y="-2" transform="translate(0,0)" font-size="12" fill="#3d6a58" text-anchor="middle" dy="-2">🛕 主壇（舞台端）</text>' +
+    '<text x="0" y="0" transform="translate(4,120) rotate(-90)" font-size="12" fill="#8a2f22" text-anchor="middle">🚪 出入口（開放側）</text>' +
+    '</svg>';
+}
+function showFloorPlanModal(){
+  var backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = '<div class="modal" style="max-width:420px;">'+
+    '<h3>📐 場佈參考圖（1→12 擺放順序）</h3>'+
+    '<div style="margin:8px 0;">'+floorPlanSvg()+'</div>'+
+    '<p style="font-size:.78em;color:#8a7d5f;">依箭頭順序由上排開始，繞到右側，再回到下排，動線不交叉。</p>'+
+    '<button class="btn gold" id="btn-close-plan" style="width:100%;">關閉</button>'+
+    '</div>';
+  document.body.appendChild(backdrop);
+  $('#btn-close-plan').addEventListener('click', function(){ backdrop.remove(); });
+  backdrop.addEventListener('click', function(e){ if(e.target === backdrop) backdrop.remove(); });
+}
+function renderGridLines(hallArea){
+  if($('#grid-layer')) return;
+  var layer = document.createElement('div');
+  layer.id = 'grid-layer';
+  layer.style.position = 'absolute';
+  layer.style.left = '0'; layer.style.top = '0';
+  layer.style.width = HALL_W+'px'; layer.style.height = HALL_H+'px';
+  layer.style.pointerEvents = 'none';
+  var html = '';
+  for(var x=0; x<=HALL_W; x+=GRID_STEP){
+    html += '<div class="grid-line v" style="left:'+x+'px;"></div>';
+    html += '<div class="grid-label vlbl" style="left:'+(x+2)+'px;">'+x+'</div>';
+  }
+  for(var y=0; y<=HALL_H; y+=GRID_STEP){
+    html += '<div class="grid-line h" style="top:'+y+'px;"></div>';
+    html += '<div class="grid-label hlbl" style="top:'+(y+2)+'px;">'+y+'</div>';
+  }
+  layer.innerHTML = html;
+  hallArea.insertBefore(layer, hallArea.firstChild);
+}
+function updateStage2UI(){
+  var markerSection = $('#marker-section');
+  var tableSection = $('#table-section');
+  if(markerSection) markerSection.style.display = L2.gridLaid ? '' : 'none';
+  var bothMarkers = L2.markers.altar && L2.markers.exit;
+  if(tableSection) tableSection.style.display = (L2.gridLaid && bothMarkers) ? '' : 'none';
+  var lockNote = $('#table-lock-note');
+  if(lockNote) lockNote.style.display = (L2.gridLaid && bothMarkers) ? 'none' : '';
+}
+function placeMarker(id, x, y){
+  L2.markers[id] = {x:x, y:y};
+  renderPlacedMarkers();
+  renderMarkerTray();
+  updateStage2UI();
+}
+function renderPlacedMarkers(){
+  var hallArea = $('#hall-area');
+  if(!hallArea) return;
+  MARKER_DEFS.forEach(function(m){
+    var pos = L2.markers[m.id];
+    if(!pos) return;
+    var el = document.getElementById('marker-'+m.id);
+    if(!el){
+      el = document.createElement('div');
+      el.className = 'marker-placed';
+      el.id = 'marker-'+m.id;
+      el.innerHTML = m.emoji+'<span class="mk-lbl">'+m.lbl+'</span>';
+      hallArea.appendChild(el);
+    }
+    el.style.left = (pos.x-20)+'px';
+    el.style.top = (pos.y-20)+'px';
+  });
+}
+function renderMarkerTray(){
+  var tray = $('#marker-tray');
+  if(!tray) return;
+  tray.innerHTML = '';
+  MARKER_DEFS.forEach(function(m){
+    if(L2.markers[m.id]) return;
+    var chip = document.createElement('div');
+    chip.className = 'drag-chip';
+    chip.innerHTML = m.emoji+'<span class="lbl2">'+m.lbl+'</span>';
+    tray.appendChild(chip);
+    makeDraggable(chip, {
+      onEnd: function(cx, cy){
+        var hallArea = $('#hall-area');
+        if(!hallArea) return;
+        var hr = hallArea.getBoundingClientRect();
+        if(cx>=hr.left && cx<=hr.right && cy>=hr.top && cy<=hr.bottom){
+          var x = clamp(cx-hr.left, 20, HALL_W-20);
+          var y = clamp(cy-hr.top, 20, HALL_H-20);
+          placeMarker(m.id, x, y);
+        }
+      }
+    });
+  });
+}
+function clearSpacingLines(){
+  $all('.measure-line').forEach(function(el){ el.remove(); });
+  $all('.measure-label').forEach(function(el){ el.remove(); });
+}
+function drawSpacingLine(a, b, dist){
+  var hallArea = $('#hall-area');
+  if(!hallArea) return;
+  var dx = b.x-a.x, dy = b.y-a.y;
+  var angle = Math.atan2(dy,dx) * 180/Math.PI;
+  var line = document.createElement('div');
+  line.className = 'measure-line';
+  line.style.left = a.x+'px';
+  line.style.top = a.y+'px';
+  line.style.width = dist+'px';
+  line.style.transform = 'rotate('+angle+'deg)';
+  hallArea.appendChild(line);
+  var label = document.createElement('div');
+  label.className = 'measure-label bad';
+  label.style.left = (a.x+dx/2-24)+'px';
+  label.style.top = (a.y+dy/2-10)+'px';
+  label.textContent = dist+'cm';
+  hallArea.appendChild(label);
+}
+function updateSpacingFeedback(){
+  var hallArea = $('#hall-area');
+  if(!hallArea) return;
+  clearSpacingLines();
+  var ids = Object.keys(L2.tablePositions);
+  var minDist = null, violations = 0;
+  for(var i=0;i<ids.length;i++){
+    for(var j=i+1;j<ids.length;j++){
+      var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
+      var d = Math.round(Math.hypot(a.x-b.x, a.y-b.y));
+      if(minDist === null || d < minDist) minDist = d;
+      if(d < 120){
+        violations++;
+        drawSpacingLine(a, b, d);
+      }
+    }
+  }
+  var st = $('#ruler-status');
+  if(!st) return;
+  if(ids.length < 2){
+    st.textContent = '📏 至少放 2 張桌子才能檢查桌距';
+    st.className = 'ruler-status';
+  } else if(violations > 0){
+    st.textContent = '❌ 有 '+violations+' 組桌子太近了（紅線標示），請拉開到 120 公分以上';
+    st.className = 'ruler-status bad';
+  } else {
+    st.textContent = '✅ 目前最短桌距 '+minDist+' 公分，全部合格！';
+    st.className = 'ruler-status ok';
+  }
+}
+function renderPlacedTables(){
+  var hallArea = $('#hall-area');
+  if(!hallArea) return;
+  Object.keys(L2.tablePositions).forEach(function(id){
+    var pos = L2.tablePositions[id];
+    var chip = document.getElementById('table-chip-'+id);
+    if(!chip){
+      chip = document.createElement('div');
+      chip.className = 'table-chip';
+      chip.id = 'table-chip-'+id;
+      chip.textContent = id;
+      hallArea.appendChild(chip);
+      makeDraggable(chip, {
+        onEnd: function(cx, cy){
+          var hr = hallArea.getBoundingClientRect();
+          var relX = clamp(cx - hr.left, 24, HALL_W-24);
+          var relY = clamp(cy - hr.top, 24, HALL_H-24);
+          L2.tablePositions[id] = {x:relX, y:relY};
+          renderPlacedTables();
+        }
+      });
+    }
+    chip.style.left = (pos.x-24)+'px';
+    chip.style.top = (pos.y-24)+'px';
+  });
+  updateSpacingFeedback();
+}
+function renderTableTray(){
+  var tray = $('#table-tray');
+  if(!tray) return;
+  tray.innerHTML = '';
+  for(var n=1;n<=TABLE_COUNT;n++){
+    if(L2.tablePositions[n]) continue;
+    (function(id){
+      var chip = document.createElement('div');
+      chip.className = 'drag-chip';
+      chip.innerHTML = '🪑<span class="lbl2">桌'+id+'</span>';
+      tray.appendChild(chip);
+      makeDraggable(chip, {
+        onEnd: function(cx, cy){
+          var hallArea = $('#hall-area');
+          if(!hallArea) return;
+          var hr = hallArea.getBoundingClientRect();
+          if(cx>=hr.left && cx<=hr.right && cy>=hr.top && cy<=hr.bottom){
+            var relX = clamp(cx-hr.left, 24, HALL_W-24);
+            var relY = clamp(cy-hr.top, 24, HALL_H-24);
+            L2.tablePositions[id] = {x:relX, y:relY};
+            renderTableTray();
+            renderPlacedTables();
+            var btn = $('#btn-l2-tables');
+            if(btn) btn.disabled = Object.keys(L2.tablePositions).length < TABLE_COUNT;
+          }
+        }
+      });
+    })(n);
+  }
+}
+function confirmTables(){
+  var ids = Object.keys(L2.tablePositions);
+  var total = 0, violations = 0;
+  for(var i=0;i<ids.length;i++){
+    for(var j=i+1;j<ids.length;j++){
+      total++;
+      var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
+      var d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(d < 120) violations++;
+    }
+  }
+  var penalty = total > 0 ? Math.round((violations/total)*40) : 0;
+  if(violations > 0){
+    L2.penalty += penalty;
+    toast('⚠️ 有 '+violations+' 組桌距不足120公分，扣分！');
+  } else {
+    toast('✅ 桌距全部合格！');
+  }
+  confettiBurst(10);
+  setTimeout(function(){ L2.step = 3; renderL2Step(); }, 700);
+}
+function renderL2Step(){
+  var hall = $('#l2-hall');
+  var stepLabel = $('#l2-steplabel');
+  var title = $('#l2-title');
+  hall.innerHTML = '';
+
+  if(L2.step === 0){
+    stepLabel.textContent = '第三關．步驟一／撤拜具歸位';
+    title.textContent = '🛕 把拜具拖回定位！';
+    var banner = document.createElement('div');
+    banner.className = 'safety-banner';
+    banner.innerHTML = '<span class="ic">🦺</span><span>安全搬運提醒：重物請蹲低用腿力抬起，不要彎腰硬扛；主法桌等大型物件務必兩人以上合力搬運，避免拉傷受傷。</span>';
+    hall.appendChild(banner);
+
+    var zonesWrap = document.createElement('div');
+    zonesWrap.className = 'storage-hall';
+    STORAGE_ZONES.forEach(function(z){
+      var box = document.createElement('div');
+      box.className = 'storage-zone';
+      box.setAttribute('data-zone', z.id);
+      box.innerHTML = '<h4>'+z.name+'</h4><div style="font-size:.72em;color:#8a7d5f;margin-bottom:6px;">'+z.hint+'</div><div class="stored-list" id="zone-list-'+z.id+'"></div>';
+      zonesWrap.appendChild(box);
+    });
+    hall.appendChild(zonesWrap);
+
+    var tray = document.createElement('div');
+    tray.className = 'item-tray';
+    L2_ITEMS.forEach(function(it){
+      var chip = document.createElement('div');
+      chip.className = 'drag-chip';
+      chip.id = 'item-'+it.id;
+      chip.innerHTML = it.emoji+(it.heavy?' ⚠️':'')+'<span class="lbl2">'+it.lbl+'</span>';
+      tray.appendChild(chip);
+      makeDraggable(chip, {
+        onEnd: function(cx, cy){ handleItemDrop(cx, cy, chip, it); }
+      });
+    });
+    hall.appendChild(tray);
+
+  } else if(L2.step === 1){
+    stepLabel.textContent = '第三關．步驟二／地面清潔';
+    title.textContent = '🧽 拖抹布擦掉髒污！';
+    var fwrap = document.createElement('div');
+    fwrap.className = 'floor-wrap';
+    var tip = document.createElement('div');
+    tip.className = 'crew-note';
+    tip.style.marginTop = '0';
+    tip.textContent = '💡 把下方的抹布拖到髒污的地磚上即可擦乾淨；如果拖曳不方便，直接點一下髒污地磚也可以清潔（備用方式）。';
+    fwrap.appendChild(tip);
+
+    var fgrid = document.createElement('div');
+    fgrid.className = 'floor-grid';
+    for(var i=0;i<8;i++){
+      var t = document.createElement('div');
+      var isDirty = L2.dirtyTiles.has(i);
+      t.className = 'tile' + (isDirty ? ' dirty' : ' clean');
+      t.setAttribute('data-idx', i);
+      t.innerHTML = isDirty ? '<div class="stain"></div>' : '<span class="checkmark">✨</span>';
+      if(isDirty){
+        (function(idx, tileEl){
+          tileEl.addEventListener('click', function(){ cleanTile(idx); });
+        })(i, t);
+      }
+      fgrid.appendChild(t);
+    }
+    fwrap.appendChild(fgrid);
+
+    var ragTray = document.createElement('div');
+    ragTray.className = 'item-tray';
+    ragTray.style.marginTop = '12px';
+    var rag = document.createElement('div');
+    rag.className = 'drag-chip';
+    rag.innerHTML = '🧽<span class="lbl2">抹布</span>';
+    ragTray.appendChild(rag);
+    fwrap.appendChild(ragTray);
+    hall.appendChild(fwrap);
+
+    makeDraggable(rag, {
+      onEnd: function(cx, cy){
+        var tiles = $all('.tile.dirty');
+        var hit = null;
+        tiles.forEach(function(tl){
+          var r = tl.getBoundingClientRect();
+          if(cx>=r.left && cx<=r.right && cy>=r.top && cy<=r.bottom) hit = tl;
+        });
+        if(hit){
+          cleanTile(parseInt(hit.getAttribute('data-idx'),10));
+        }
+      }
+    });
+
+  } else if(L2.step === 2){
+    stepLabel.textContent = '第三關．步驟三／排桌拉距';
+    title.textContent = '📏 鋪皮尺、標方向、排好桌子！';
+    var wrap = document.createElement('div');
+
+    var planBtnWrap = document.createElement('div');
+    planBtnWrap.className = 'center';
+    planBtnWrap.style.marginBottom = '10px';
+    planBtnWrap.innerHTML = '<button class="btn ghost" id="btn-plan">📐 查看場佈圖（1→12 順序）</button>';
+    wrap.appendChild(planBtnWrap);
+
+    var tip2 = document.createElement('div');
+    tip2.className = 'crew-note';
+    tip2.style.marginTop = '0';
+    tip2.textContent = L2.gridLaid
+      ? '💡 把「🛕主壇」「🚪出入口」拖進場地標出方向，再把12張圓桌自由拖進場地擺放。點兩張桌子附近會自動顯示距離，不足120公分會標紅線，請拉開。'
+      : '💡 把左上角的「📏 皮尺」拖到場地右下角，鋪出每格60公分的座標網格。';
+    wrap.appendChild(tip2);
+
+    var hallScroll = document.createElement('div');
+    hallScroll.className = 'hall-scroll';
+    var hallArea = document.createElement('div');
+    hallArea.className = 'hall-area';
+    hallArea.id = 'hall-area';
+    hallArea.style.width = HALL_W+'px';
+    hallArea.style.height = HALL_H+'px';
+    hallScroll.appendChild(hallArea);
+    wrap.appendChild(hallScroll);
+
+    if(L2.gridLaid){
+      hall.appendChild(wrap);
+      renderGridLines(hallArea);
+      renderPlacedMarkers();
+    } else {
+      var handle = document.createElement('div');
+      handle.className = 'ruler-handle';
+      handle.id = 'ruler-handle';
+      handle.textContent = '📏';
+      hallArea.appendChild(handle);
+      var target = document.createElement('div');
+      target.className = 'ruler-target';
+      target.style.left = (HALL_W-48)+'px';
+      target.style.top = (HALL_H-48)+'px';
+      target.textContent = '🎯';
+      hallArea.appendChild(target);
+      hall.appendChild(wrap);
+      makeDraggable(handle, {
+        onEnd: function(cx, cy){
+          var hr = hallArea.getBoundingClientRect();
+          var relX = cx-hr.left, relY = cy-hr.top;
+          var dist = Math.hypot(relX-(HALL_W-24), relY-(HALL_H-24));
+          if(dist < 90){
+            L2.gridLaid = true;
+            toast('✅ 座標網格鋪好了！');
+            renderL2Step();
+          }
+        }
+      });
+    }
+
+    var markerSection = document.createElement('div');
+    markerSection.id = 'marker-section';
+    markerSection.style.display = 'none';
+    markerSection.innerHTML = '<div class="crew-note" style="margin-top:10px;">💡 拖曳下方圖示到場地內，標出主壇（舞台端）與出入口（開放側）方向：</div>';
+    var markerTray = document.createElement('div');
+    markerTray.className = 'item-tray';
+    markerTray.id = 'marker-tray';
+    markerSection.appendChild(markerTray);
+    wrap.appendChild(markerSection);
+
+    var lockNote = document.createElement('div');
+    lockNote.id = 'table-lock-note';
+    lockNote.className = 'crew-note';
+    lockNote.textContent = '🔒 完成上方皮尺定位與方向標記後，才能開始排桌。';
+    wrap.appendChild(lockNote);
+
+    var tableSection = document.createElement('div');
+    tableSection.id = 'table-section';
+    tableSection.style.display = 'none';
+    var ruleStatus = document.createElement('div');
+    ruleStatus.className = 'ruler-toolbar';
+    ruleStatus.innerHTML = '<span class="ruler-status" id="ruler-status">📏 至少放 2 張桌子才能檢查桌距</span>';
+    tableSection.appendChild(ruleStatus);
+    var tableTray = document.createElement('div');
+    tableTray.className = 'item-tray';
+    tableTray.id = 'table-tray';
+    tableSection.appendChild(tableTray);
+    var confirmWrap = document.createElement('div');
+    confirmWrap.className = 'center';
+    confirmWrap.style.marginTop = '14px';
+    confirmWrap.innerHTML = '<button class="btn gold" id="btn-l2-tables" disabled>✅ 確認擺放</button>';
+    tableSection.appendChild(confirmWrap);
+    wrap.appendChild(tableSection);
+
+    renderMarkerTray();
+    renderTableTray();
+    renderPlacedTables();
+    updateStage2UI();
+
+    $('#btn-plan').addEventListener('click', showFloorPlanModal);
+    $('#btn-l2-tables').disabled = Object.keys(L2.tablePositions).length < TABLE_COUNT;
+    $('#btn-l2-tables').addEventListener('click', confirmTables);
+
+  } else if(L2.step === 3){
+    stepLabel.textContent = '第三關．步驟四／最終檢核';
+    title.textContent = '✅ 開席前巡場！';
+    var items = [
+      {id:'c1', text:'動線單向？'},
+      {id:'c2', text:'線路防踩？'},
+      {id:'c3', text:'桌椅穩固？'},
+      {id:'c4', text:'總幹事確認？'}
+    ];
+    var list = document.createElement('div');
+    list.className = 'checklist';
+    items.forEach(function(it){
+      var row = document.createElement('div');
+      row.className = 'check-item';
+      row.innerHTML = '<span class="box"></span><span>'+it.text+'</span>';
+      row.addEventListener('click', function(){
+        if(row.classList.contains('checked')) return;
+        row.classList.add('checked');
+        L2.checked[it.id] = true;
+        floatPopAt(row, '✓', '#26443a');
+        if(Object.keys(L2.checked).length >= items.length){
+          toast('🎉 開席囉！');
+          confettiBurst(20);
+          setTimeout(function(){ finishLevel2(false); }, 600);
+        }
+      });
+      list.appendChild(row);
+    });
+    hall.appendChild(list);
+  }
+}
+
+
+function finishLevel2(forced){
+  if(L2.timer){ clearInterval(L2.timer); L2.timer = null; }
+  var base = 100 - L2.penalty;
+  if(forced){
+    var stepsLeft = 3 - L2.step;
+    base -= stepsLeft * 12;
+    toast('⏰ 時間到！');
+  }
+  var finalScore = clamp(Math.round(base), 0, 100);
+  TOTAL_SCORE.l2 = finalScore;
+  toast('🏁 第三關 '+finalScore+' 分！');
+  confettiBurst(16);
+  setTimeout(startLevel3, 900);
+}
+
+/* ===================== 第三關：圓滿撤場大處置 ===================== */
+var TOKEN_DEFS = [
+  { type:'zu',  name:'組長',   emoji:'🧑‍✈️' },
+  { type:'chai',name:'拆收組', emoji:'🪑' },
+  { type:'yun', name:'運輸組', emoji:'🚚' },
+  { type:'qing',name:'清潔組', emoji:'🧹' },
+  { type:'ji',  name:'支援組', emoji:'🛠️' }
+];
+var NODE_DEFS = [
+  { id:'n1', name:'① 清殘渣', seq:['qing'] },
+  { id:'n2', name:'② 收桌椅', seq:['chai','yun'] },
+  { id:'n3', name:'③ 復原場地', seq:['qing','ji'] },
+  { id:'n4', name:'④ 清點交接', seq:['zu'] }
+];
+
+var L3 = {};
+
+function startLevel3(){
+  L3 = { time:60, timer:null, penalty:0, nodeIndex:0,
+         tokenStamina:{}, tokenBusy:{}, nodes: NODE_DEFS.map(function(n){
+            return { id:n.id, name:n.name, seq:n.seq.slice(), progress:0, done:false };
+         }) };
+  TOKEN_DEFS.forEach(function(t){ L3.tokenStamina[t.type] = 100; L3.tokenBusy[t.type] = false; });
+  showScreen('screen-level3');
+  renderL3();
+  updateL3Hud();
+  L3.timer = setInterval(function(){
+    L3.time--;
+    updateL3Hud();
+    if(L3.time <= 0){ finishLevel3(true); }
+  }, 1000);
+}
+function updateL3Hud(){
+  setHud('第四關', L3.time+'s', scoreSum());
+  var pct = clamp(L3.time/60*100,0,100);
+  var fill = $('#l3-timerfill');
+  fill.style.width = pct+'%';
+  fill.className = 'timerbar-fill' + (pct<25?' danger':'');
+}
+function activeNodeIndex(){
+  for(var i=0;i<L3.nodes.length;i++){
+    if(!L3.nodes[i].done) return i;
+  }
+  return -1;
+}
+function renderL3(){
+  renderPool();
+  renderNodes();
+}
+function renderPool(){
+  var pool = $('#l3-pool');
+  pool.innerHTML = '';
+  TOKEN_DEFS.forEach(function(t){
+    var stamina = L3.tokenStamina[t.type];
+    var busy = L3.tokenBusy[t.type];
+    var card = document.createElement('div');
+    card.className = 'token' + (busy ? ' busy' : '');
+    card.id = 'token-'+t.type;
+    card.draggable = !busy;
+    card.innerHTML =
+      '<div class="emoji">'+t.emoji+'</div>'+
+      '<div class="tname">'+t.name+'</div>'+
+      '<div class="stamina-bar"><div class="stamina-fill'+(stamina<35?' low':'')+'" style="width:'+stamina+'%"></div></div>'+
+      '<button class="rest-btn" data-type="'+t.type+'">💤 休息</button>';
+    card.addEventListener('dragstart', function(e){
+      if(card.classList.contains('busy')){ e.preventDefault(); return; }
+      e.dataTransfer.setData('text/plain', card.id.replace('token-',''));
+    });
+    pool.appendChild(card);
+  });
+  pool.querySelectorAll('.rest-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var type = btn.getAttribute('data-type');
+      if(L3.tokenBusy[type]) return;
+      L3.tokenBusy[type] = true;
+      toast('💤 '+labelOf(type)+' 休息中…');
+      renderPool();
+      setTimeout(function(){
+        L3.tokenStamina[type] = 100;
+        L3.tokenBusy[type] = false;
+        toast('✅ '+labelOf(type)+' 體力回滿');
+        renderPool();
+      }, 4000);
+    });
+  });
+}
+function labelOf(type){
+  var f = TOKEN_DEFS.filter(function(t){ return t.type===type; })[0];
+  return f ? f.name : type;
+}
+function renderNodes(){
+  var wrap = $('#l3-nodes');
+  wrap.innerHTML = '';
+  var activeIdx = activeNodeIndex();
+  L3.nodes.forEach(function(node, idx){
+    var el = document.createElement('div');
+    var isActive = idx === activeIdx;
+    var isCompact = !isActive;
+    el.className = 'node' + (node.done ? ' done' : (isActive ? ' active' : ' locked')) + (isCompact ? ' compact' : '');
+
+    if(isCompact){
+      el.innerHTML =
+        '<div class="ntitle"><span>'+node.name+'</span></div>'+
+        '<span>'+(node.done?'✅':'🔒')+'</span>';
+      wrap.appendChild(el);
+      return;
+    }
+
+    var seqHtml = '<div class="seq">';
+    node.seq.forEach(function(type, si){
+      var cls = si < node.progress ? 'seq-step done' : (si === node.progress ? 'seq-step next' : 'seq-step');
+      var def = TOKEN_DEFS.filter(function(t){return t.type===type;})[0];
+      seqHtml += '<div class="'+cls+'" title="'+def.name+'">'+(si < node.progress ? '✔' : def.emoji)+'</div>';
+    });
+    seqHtml += '</div>';
+    el.innerHTML =
+      '<div class="ntitle"><span>'+node.name+'</span><span>▶️</span></div>'+
+      seqHtml+
+      '<div class="dropzone" id="dz-'+node.id+'">拖人力卡到這裡</div>';
+    wrap.appendChild(el);
+
+    var dz = el.querySelector('.dropzone');
+    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('over'); });
+    dz.addEventListener('dragleave', function(){ dz.classList.remove('over'); });
+    dz.addEventListener('drop', function(e){
+      e.preventDefault();
+      dz.classList.remove('over');
+      var type = e.dataTransfer.getData('text/plain');
+      handleDrop(idx, node, type, dz);
+    });
+  });
+}
+function handleDrop(idx, node, type, dz){
+  var activeIdx = activeNodeIndex();
+  if(idx !== activeIdx){
+    toast('🔒 還沒解鎖');
+    L3.penalty += 5;
+    return;
+  }
+  var needed = node.seq[node.progress];
+  if(type !== needed){
+    toast('❌ 崗位不對');
+    L3.penalty += 10;
+    return;
+  }
+  if(L3.tokenBusy[type]){
+    toast('⏳ 忙線中');
+    return;
+  }
+  var stamina = L3.tokenStamina[type];
+  var lowStamina = stamina < 35;
+  if(lowStamina){
+    toast('⚠️ 體力不足，變慢了');
+    L3.penalty += 15;
+  } else {
+    toast('👍 開始作業！');
+    floatPopAt(dz, '✓', '#26443a');
+  }
+  L3.tokenBusy[type] = true;
+  L3.tokenStamina[type] = Math.max(0, stamina - 35);
+  renderPool();
+  var dur = lowStamina ? 2600 : 1400;
+  setTimeout(function(){
+    L3.tokenBusy[type] = false;
+    node.progress++;
+    if(node.progress >= node.seq.length){
+      node.done = true;
+      toast('✅ '+node.name+' 完成！');
+      confettiBurst(10);
+    }
+    renderPool();
+    renderNodes();
+    if(L3.nodes.every(function(n){ return n.done; })){
+      finishLevel3(false);
+    }
+  }, dur);
+}
+function finishLevel3(forced){
+  if(L3.timer){ clearInterval(L3.timer); L3.timer = null; }
+  var base = 100 - L3.penalty;
+  if(forced){
+    var undone = L3.nodes.filter(function(n){ return !n.done; }).length;
+    base -= undone * 18;
+    toast('⏰ 時間到！');
+  }
+  var finalScore = clamp(Math.round(base), 0, 100);
+  TOTAL_SCORE.l3 = finalScore;
+  toast('🏁 第四關 '+finalScore+' 分！');
+  confettiBurst(16);
+  setTimeout(showEnd, 900);
+}
+
+/* ===================== 結業畫面 ===================== */
+var KNOWLEDGE_CARDS = [
+  { t:'人力先分工再上場', c:'組長1人＋組員9人，先依拆收、運輸、清潔、支援分好組別，換場當天才不會有人閒、有人累爆。' },
+  { t:'安全搬運不受傷', c:'搬重物要蹲低、用腿力抬起，不彎腰硬扛；主法桌等大型物件一律兩人以上合力搬運。' },
+  { t:'單向動線', c:'桌椅進場動線一律單向不交叉，避免正面相撞延誤換場。' },
+  { t:'抬舉不拖曳', c:'桌椅進場一律用抬的、不拖地，保護地板也降低噪音。' },
+  { t:'定位標記先貼好', c:'前一天先在地面貼好隱蔽色定位貼紙，現場直接對點擺桌，不用臨時拿尺丈量。' },
+  { t:'場地配置先畫圖', c:'換場前先在紙上或白板排好各區塊位置與桌距，現場才能照圖施工不迷路。' },
+  { t:'區域責任制', c:'把大殿劃分 A、B、C、D 四區，每區由一名副組長帶 3～4 人負責，避免混亂。' },
+  { t:'撤場順序', c:'廚餘先清、桌椅再收、最後運輸歸位——順序顛倒會觸發「髒污懲罰」。' },
+  { t:'清點交接才算圓滿', c:'撤場最後一定要物資清點、與場地管理人員簽退交接，白紙黑字才安心。' }
+];
+
+function showEnd(){
+  $('#score-l0').textContent = TOTAL_SCORE.l0;
+  $('#score-l1').textContent = TOTAL_SCORE.l1;
+  $('#score-l2').textContent = TOTAL_SCORE.l2;
+  $('#score-l3').textContent = TOTAL_SCORE.l3;
+  var avg = Math.round(scoreSum() / 4);
+  var grade = avg >= 90 ? 'S' : avg >= 75 ? 'A' : avg >= 60 ? 'B' : 'C';
+  $('#grade-badge').textContent = grade;
+  var kg = $('#knowledge-grid');
+  kg.innerHTML = '';
+  KNOWLEDGE_CARDS.forEach(function(k){
+    var d = document.createElement('div');
+    d.className = 'k-card';
+    d.innerHTML = '<b>'+k.t+'</b>'+k.c;
+    kg.appendChild(d);
+  });
+  setHud('結業', '-', scoreSum());
+  showScreen('screen-end');
+  confettiBurst(grade === 'S' ? 60 : 36);
+}
+
+/* ===================== 綁定事件 ===================== */
+$('#btn-start').addEventListener('click', startLevel0);
+$('#btn-restart').addEventListener('click', function(){
+  TOTAL_SCORE = { l0:0, l1:0, l2:0, l3:0 };
+  showScreen('screen-start');
+  setHud('-', '-', 0);
+});
+
+})();
+</script>
+</body>
+</html>
