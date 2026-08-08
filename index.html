@@ -406,6 +406,7 @@ h1,h2,h3{font-family:'Noto Serif TC', serif; margin:0 0 8px 0;}
   touch-action:none; cursor:grab; user-select:none;
 }
 .table-chip.dragging{cursor:grabbing; z-index:60; box-shadow:0 8px 18px rgba(0,0,0,.3);}
+.corner-table{border-color:var(--jade) !important; box-shadow:0 0 0 3px rgba(61,106,88,0.25);}
 .measure-line{position:absolute; height:2px; background:var(--vermillion); transform-origin:0 0; z-index:40; pointer-events:none;}
 .measure-line.ok{background:var(--jade);}
 .measure-label{
@@ -866,6 +867,13 @@ function finishLevel1(){
 /* ===================== 第三關：黃金換場30分鐘 ===================== */
 var L2 = {};
 var TABLE_COUNT = 12;
+var CORNER_PAIRS = [['5','6'],['7','8']];
+function isCornerPair(idA, idB){
+  var a = String(idA), b = String(idB);
+  return CORNER_PAIRS.some(function(p){
+    return (p[0]===a && p[1]===b) || (p[0]===b && p[1]===a);
+  });
+}
 var HALL_W = 640, HALL_H = 360, GRID_STEP = 60;
 var L2_ITEMS = [
   {id:'p1',emoji:'🧎',lbl:'拜墊', target:'xindeng'},{id:'p2',emoji:'🧎',lbl:'拜墊', target:'xindeng'},
@@ -1183,6 +1191,7 @@ function updateSpacingFeedback(){
   var minDist = null, violations = 0;
   for(var i=0;i<ids.length;i++){
     for(var j=i+1;j<ids.length;j++){
+      if(isCornerPair(ids[i], ids[j])) continue;
       var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
       var d = Math.round(Math.hypot(a.x-b.x, a.y-b.y));
       if(minDist === null || d < minDist) minDist = d;
@@ -1198,10 +1207,10 @@ function updateSpacingFeedback(){
     st.textContent = '📏 至少放 2 張桌子才能檢查桌距';
     st.className = 'ruler-status';
   } else if(violations > 0){
-    st.textContent = '❌ 有 '+violations+' 組桌子太近了（紅線標示），請拉開到 120 公分以上';
+    st.textContent = '❌ 有 '+violations+' 組桌子太近了（紅線標示），請拉開到 120 公分以上（5↔6、7↔8 轉角相連桌不受此限）';
     st.className = 'ruler-status bad';
   } else {
-    st.textContent = '✅ 目前最短桌距 '+minDist+' 公分，全部合格！';
+    st.textContent = '✅ 目前最短桌距 '+(minDist===null?'—':minDist)+' 公分，全部合格！（5↔6、7↔8 轉角相連桌不受120公分限制）';
     st.className = 'ruler-status ok';
   }
 }
@@ -1213,7 +1222,8 @@ function renderPlacedTables(){
     var chip = document.getElementById('table-chip-'+id);
     if(!chip){
       chip = document.createElement('div');
-      chip.className = 'table-chip';
+      var isCorner = (String(id)==='5'||String(id)==='6'||String(id)==='7'||String(id)==='8');
+      chip.className = 'table-chip' + (isCorner ? ' corner-table' : '');
       chip.id = 'table-chip-'+id;
       chip.textContent = id;
       hallArea.appendChild(chip);
@@ -1239,9 +1249,10 @@ function renderTableTray(){
   for(var n=1;n<=TABLE_COUNT;n++){
     if(L2.tablePositions[n]) continue;
     (function(id){
+      var isCorner = (id===5||id===6||id===7||id===8);
       var chip = document.createElement('div');
-      chip.className = 'drag-chip';
-      chip.innerHTML = '🪑<span class="lbl2">桌'+id+'</span>';
+      chip.className = 'drag-chip' + (isCorner ? ' corner-table' : '');
+      chip.innerHTML = '🪑<span class="lbl2">桌'+id+(isCorner?' 🔗':'')+'</span>';
       tray.appendChild(chip);
       makeDraggable(chip, {
         onEnd: function(cx, cy){
@@ -1267,6 +1278,7 @@ function confirmTables(){
   var total = 0, violations = 0;
   for(var i=0;i<ids.length;i++){
     for(var j=i+1;j<ids.length;j++){
+      if(isCornerPair(ids[i], ids[j])) continue;
       total++;
       var a = L2.tablePositions[ids[i]], b = L2.tablePositions[ids[j]];
       var d = Math.hypot(a.x-b.x, a.y-b.y);
@@ -1389,7 +1401,7 @@ function renderL2Step(){
     tip2.className = 'crew-note';
     tip2.style.marginTop = '0';
     tip2.textContent = L2.gridLaid
-      ? '💡 把「🛕主壇」「🚪出入口」拖進場地標出方向，再把12張圓桌自由拖進場地擺放。點兩張桌子附近會自動顯示距離，不足120公分會標紅線，請拉開。'
+      ? '💡 把「🛕主壇」「🚪出入口」拖進場地標出方向，再把12張圓桌自由拖進場地擺放。桌子之間至少要120公分，系統會即時標紅線提醒；其中 5↔6、7↔8 是轉角相連桌，可以緊靠在一起，不受120公分限制。'
       : '💡 把左上角的「📏 皮尺」拖到場地右下角，鋪出每格60公分的座標網格。';
     wrap.appendChild(tip2);
 
